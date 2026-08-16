@@ -1,3 +1,4 @@
+import re
 DANGEROUS_KEYWORDS=[
     "DROP","DELETE","ALTER","UPDATE","INSERT","TRUNCATE","CREATE","REPLACE","GRANT","REVOKE","EXEC","EXECUTE","PRAGMA","ATTACH","DETACH","VACUUM","RENAME","MERGE","CALL","SET","COPY","LOCK","COMMENT","RESTORE","KILL"]
 
@@ -6,11 +7,16 @@ def is_safe_query(sql:str)->tuple[bool,str]:
         return False,"Empty or invalid query"
 
     cleaned=sql.upper().strip()
+    cleaned=re.sub(r'--.*$','',cleaned,flags=re.MULTILINE)
+    cleaned=re.sub(r'/\*.*?\*/','',cleaned,flags=re.DOTALL)
+    cleaned=cleaned.strip()
+
+    if not cleaned:
+        return False,"Query is empty after removing comments"
 
     if not cleaned.startswith("SELECT"):
         return False,"Only SELECT queries are allowed"
 
-    import re
     for keyword in DANGEROUS_KEYWORDS:
         pattern=r'\b'+keyword+r'\b'
         if re.search(pattern, cleaned):
@@ -20,8 +26,6 @@ def is_safe_query(sql:str)->tuple[bool,str]:
 
 
 def sanitize_input(user_input:str)->str:
-    import re
-
     had_comment='--' in user_input or ('/*' in user_input and '*/' in user_input)
 
     cleaned=re.sub(r'--.*$','',user_input,flags=re.MULTILINE)
