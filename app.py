@@ -2,6 +2,9 @@ import streamlit as st
 from pathlib import Path
 from agent import create_agent, run_query, extract_sql
 from safety import is_safe_query, sanitize_input
+from database import execute_query_to_df
+
+DB_PATH=Path(__file__).parent/"Database"/"Sample"/"Chinook_Sqlite.sqlite"
 
 st.set_page_config(
     page_title="SchemaChat-SQL Database Chatbot",
@@ -16,7 +19,6 @@ if "agent" not in st.session_state:
     st.session_state.agent=None
 
 if st.session_state.agent is None:
-    DB_PATH=Path(__file__).parent/"Database"/"Sample"/"Chinook_Sqlite.sqlite"
     with st.spinner("Initializing SQL Agent"):
         st.session_state.agent=create_agent(str(DB_PATH))
     st.success("Agent Ready!")
@@ -53,3 +55,9 @@ if prompt:=st.chat_input("Ask about your database "):
                 else:
                     with st.expander("View SQL Query"):
                         st.code(sql,language="sql")
+
+            try:
+                df=execute_query_to_df(str(DB_PATH),sql)
+                st.dataframe(df, use_container_width=True)
+            except Exception as e:
+                st.warning(f"Could not display results table: {e}")

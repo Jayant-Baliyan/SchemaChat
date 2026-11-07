@@ -1,8 +1,13 @@
 from sqlalchemy import create_engine,inspect
 from langchain_community.utilities import SQLDatabase
 from pathlib import Path
+import pandas as pd 
 
 BASE_DIR=Path(__file__).parent
+
+def execute_query_to_df(db_path: str, query:str):
+    engine= create_engine(f"sqlite:///{db_path}")
+    return pd.read_sql_query(query, engine)
 
 def get_db_connection(db_path):
     engine=create_engine(f"sqlite:///{db_path}")
